@@ -15,10 +15,20 @@ const EFFORT_OPTIONS: { value: EffortLevel; label: string }[] = [
   { value: 'max', label: 'Max' },
 ]
 
-export function ModelSelector() {
-  const { currentModel, availableModels, effortLevel, setModel, setEffort } = useSettingsStore()
+type Props = {
+  /** Controlled mode: model ID override */
+  value?: string
+  /** Controlled mode: called on change instead of updating global store */
+  onChange?: (modelId: string) => void
+}
+
+export function ModelSelector({ value, onChange }: Props = {}) {
+  const { currentModel: storeModel, availableModels, effortLevel, setModel, setEffort } = useSettingsStore()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  const isControlled = value !== undefined
+  const selectedModel = isControlled ? availableModels.find((m) => m.id === value) || null : storeModel
 
   useEffect(() => {
     if (!open) return
@@ -51,7 +61,7 @@ export function ModelSelector() {
         className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-hover)] rounded-full text-xs font-medium text-[var(--color-text-secondary)] transition-colors"
       >
         <span className="material-symbols-outlined text-[14px] text-[var(--color-brand)]">auto_awesome</span>
-        <span>{currentModel?.name ?? 'Select model'}</span>
+        <span>{selectedModel?.name ?? 'Select model'}</span>
         <span className="material-symbols-outlined text-[12px]">expand_more</span>
       </button>
 
@@ -64,11 +74,18 @@ export function ModelSelector() {
             </div>
             <div className="space-y-1">
               {availableModels.map((model) => {
-                const isSelected = model.id === currentModel?.id
+                const isSelected = model.id === selectedModel?.id
                 return (
                   <button
                     key={model.id}
-                    onClick={() => { setModel(model.id); setOpen(false) }}
+                    onClick={() => {
+                      if (isControlled) {
+                        onChange?.(model.id)
+                      } else {
+                        setModel(model.id)
+                      }
+                      setOpen(false)
+                    }}
                     className={`
                       w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors
                       ${isSelected
@@ -104,8 +121,8 @@ export function ModelSelector() {
             </div>
           </div>
 
-          {/* Effort */}
-          <div className="border-t border-[var(--color-border)] p-3">
+          {/* Effort — hidden in controlled mode (not relevant for task creation) */}
+          {!isControlled && <div className="border-t border-[var(--color-border)] p-3">
             <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-outline)] mb-2 px-1">
               Effort
             </div>
@@ -129,7 +146,7 @@ export function ModelSelector() {
                 )
               })}
             </div>
-          </div>
+          </div>}
         </div>
       )}
     </div>

@@ -19,14 +19,22 @@ export function ScheduledTasks() {
     <div className="flex-1 overflow-y-auto">
       <div className="px-10 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Scheduled tasks</h1>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Run tasks on a schedule or whenever you need them.
+              Run tasks on a schedule or whenever you need them. Type <code className="px-1 py-0.5 rounded bg-[var(--color-surface-container)] text-xs font-[var(--font-mono)]">/schedule</code> in any existing session to create one.
             </p>
           </div>
           <Button onClick={() => openModal('new-task')}>+ New task</Button>
+        </div>
+
+        {/* Desktop-online notice */}
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-warning)]/8 border border-[var(--color-warning)]/15 mb-6">
+          <span className="material-symbols-outlined text-[18px] text-[var(--color-warning)]">schedule</span>
+          <span className="text-xs text-[var(--color-text-secondary)]">
+            Scheduled tasks only run while the desktop app is open. Make sure it stays running for tasks to fire on time.
+          </span>
         </div>
 
         {/* Content */}
@@ -42,10 +50,12 @@ export function ScheduledTasks() {
       </div>
 
       {/* New Task Modal */}
-      <NewTaskModal
-        open={activeModal === 'new-task'}
-        onClose={closeModal}
-      />
+      {activeModal === 'new-task' && (
+        <NewTaskModal
+          open
+          onClose={closeModal}
+        />
+      )}
     </div>
   )
 }

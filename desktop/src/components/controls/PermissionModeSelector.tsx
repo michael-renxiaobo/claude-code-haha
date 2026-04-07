@@ -56,14 +56,25 @@ const MODE_LABELS: Record<PermissionMode, string> = {
   dontAsk: 'Don\'t ask',
 }
 
-export function PermissionModeSelector({ workDir: workDirProp }: { workDir?: string } = {}) {
-  const { permissionMode, setPermissionMode } = useSettingsStore()
+type Props = {
+  workDir?: string
+  /** Controlled mode: override current value */
+  value?: PermissionMode
+  /** Controlled mode: called on change instead of updating global store */
+  onChange?: (mode: PermissionMode) => void
+}
+
+export function PermissionModeSelector({ workDir: workDirProp, value, onChange }: Props = {}) {
+  const { permissionMode: storeMode, setPermissionMode } = useSettingsStore()
   const setSessionPermissionMode = useChatStore((s) => s.setSessionPermissionMode)
   const sessions = useSessionStore((s) => s.sessions)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const [open, setOpen] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  const isControlled = value !== undefined
+  const currentMode = isControlled ? value : storeMode
 
   const activeSession = sessions.find((s) => s.id === activeSessionId)
   const workDir = workDirProp || activeSession?.workDir || '~'
@@ -90,8 +101,8 @@ export function PermissionModeSelector({ workDir: workDirProp }: { workDir?: str
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-hover)] rounded-full text-xs font-medium text-[var(--color-text-secondary)] transition-colors"
       >
-        <span className="material-symbols-outlined text-[14px]">{MODE_ICONS[permissionMode]}</span>
-        <span>{MODE_LABELS[permissionMode]}</span>
+        <span className="material-symbols-outlined text-[14px]">{MODE_ICONS[currentMode]}</span>
+        <span>{MODE_LABELS[currentMode]}</span>
         <span className="material-symbols-outlined text-[12px]">expand_more</span>
       </button>
 
@@ -109,14 +120,18 @@ export function PermissionModeSelector({ workDir: workDirProp }: { workDir?: str
                   setConfirmDialog(true)
                   return
                 }
-                void setPermissionMode(item.value)
-                setSessionPermissionMode(item.value)
+                if (isControlled) {
+                  onChange?.(item.value)
+                } else {
+                  void setPermissionMode(item.value)
+                  setSessionPermissionMode(item.value)
+                }
                 setOpen(false)
               }}
               className={`
                 w-full flex items-start gap-3 px-4 py-3 text-left transition-colors
                 hover:bg-[var(--color-surface-hover)]
-                ${item.value === permissionMode ? 'bg-[var(--color-surface-selected)]' : ''}
+                ${item.value === currentMode ? 'bg-[var(--color-surface-selected)]' : ''}
               `}
             >
               <span className={`material-symbols-outlined text-[20px] mt-0.5 ${item.color || 'text-[var(--color-text-secondary)]'}`}>
@@ -126,7 +141,7 @@ export function PermissionModeSelector({ workDir: workDirProp }: { workDir?: str
                 <div className="text-sm font-semibold text-[var(--color-text-primary)]">{item.label}</div>
                 <div className="text-xs text-[var(--color-text-tertiary)] mt-0.5">{item.description}</div>
               </div>
-              {item.value === permissionMode && (
+              {item.value === currentMode && (
                 <span className="material-symbols-outlined text-[16px] text-[var(--color-brand)] mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>
                   check_circle
                 </span>
@@ -189,8 +204,12 @@ export function PermissionModeSelector({ workDir: workDirProp }: { workDir?: str
               </button>
               <button
                 onClick={() => {
-                  void setPermissionMode('bypassPermissions')
-                  setSessionPermissionMode('bypassPermissions')
+                  if (isControlled) {
+                    onChange?.('bypassPermissions')
+                  } else {
+                    void setPermissionMode('bypassPermissions')
+                    setSessionPermissionMode('bypassPermissions')
+                  }
                   setConfirmDialog(false)
                 }}
                 className="px-4 py-2 text-xs font-semibold text-white bg-[var(--color-error)] hover:opacity-90 rounded-lg transition-colors"
