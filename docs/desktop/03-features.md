@@ -55,6 +55,8 @@
 
 ## 代码展示
 
+![Write 工具 Diff 视图](../images/desktop_ui/02_edit_code.png)
+
 ### CodeViewer
 
 基于 Shiki（VS Code 同款引擎），支持行号、超 20 行自动折叠、一键复制。
